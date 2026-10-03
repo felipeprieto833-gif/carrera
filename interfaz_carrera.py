@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import ttk
 
 from Cronometro import Cronometro
 from Temporizador import Temporizador
@@ -9,7 +9,7 @@ from Vehiculo import Vehiculo
 class InterfazCarrera(tk.Tk):
     ANCHO_PISTA = 960
     ALTO_CARRIL = 48
-    MARGEN_INFO = 150  # espacio a la izquierda para nombre y estado de cada carro
+    MARGEN_INFO = 150
 
     DATOS_VEHICULOS = [
         "Chicharito Hernandez",
@@ -20,7 +20,7 @@ class InterfazCarrera(tk.Tk):
         "Molly",
         "Verde Fuxia",
         "Tornado Loco",
-        "Lince Electrico",
+        "Betrosky, Un poco loco",
         "Meteoro",
     ]
 
@@ -39,30 +39,22 @@ class InterfazCarrera(tk.Tk):
         self.crearPanelControl()
         self.crearVehiculos()
 
-        # Timer extra solo para refrescar el reloj en pantalla (tiempo real, sin escala)
         self.temporizadorReloj = Temporizador(self, 50, self.actualizarReloj)
-
-    # ------------------------------------------------------------------ interfaz
 
     def crearPista(self):
         altoPista = self.ALTO_CARRIL * len(self.DATOS_VEHICULOS) + 20
-        self.canvas = tk.Canvas(self, width=self.ANCHO_PISTA, height=altoPista, bg="#3f3f46",
-                                highlightthickness=0)
+        self.canvas = tk.Canvas(self, width=self.ANCHO_PISTA, height=altoPista, bg="#3f3f46",highlightthickness=0)
         self.canvas.grid(row=0, column=0, rowspan=2, padx=10, pady=10)
 
         self.xMin = self.MARGEN_INFO
-        self.xMax = self.ANCHO_PISTA - 20 - Vehiculo.ANCHO
+        self.xMax = self.ANCHO_PISTA - 20 - Vehiculo.ancho
 
         for i in range(len(self.DATOS_VEHICULOS)):
             y0 = 10 + i * self.ALTO_CARRIL
-            self.canvas.create_rectangle(0, y0, self.ANCHO_PISTA, y0 + self.ALTO_CARRIL,
-                                         fill="#80adbc" if i % 2 == 0 else "#CED6D7",
-                                         outline="", tags=f"carril{i + 1}")
-            # Linea discontinua entre carriles
+            self.canvas.create_rectangle(0, y0, self.ANCHO_PISTA, y0 + self.ALTO_CARRIL,fill="#cce6ee" if i % 2 == 0 else "#CED6D7",outline="", tags=f"carril{i + 1}")
             for x in range(self.MARGEN_INFO, self.ANCHO_PISTA, 30):
                 self.canvas.create_line(x, y0, x + 15, y0, fill="white", width=2)
 
-        # Bandera de salida/meta (cuadros) y linea de retorno a la derecha
         tamCuadro = 8
         xBandera = self.xMin - 2 * tamCuadro - 4
         for fila in range((altoPista - 20) // tamCuadro):
@@ -71,8 +63,8 @@ class InterfazCarrera(tk.Tk):
                 yc = 10 + fila * tamCuadro
                 xc = xBandera + col * tamCuadro
                 self.canvas.create_rectangle(xc, yc, xc + tamCuadro, yc + tamCuadro, fill=color, outline="")
-        xRetorno = self.xMax + Vehiculo.ANCHO + 4
-        self.canvas.create_line(xRetorno, 10, xRetorno, altoPista - 10, fill="#facc15", width=4)
+        xRetorno = self.xMax + Vehiculo.ancho + 4
+        self.canvas.create_line(xRetorno, 10, xRetorno, altoPista - 10, fill="#ffff00", width=4)
 
     def crearPanelControl(self):
         panel = tk.Frame(self)
@@ -80,17 +72,14 @@ class InterfazCarrera(tk.Tk):
 
         marcoApuesta = tk.LabelFrame(panel, text="Apuesta", padx=8, pady=6)
         marcoApuesta.pack(fill="x", pady=4)
-        self.comboApuesta = ttk.Combobox(marcoApuesta, state="readonly", width=24,
-                                         values=[f"{i + 1}. {nombre}" for i, nombre in
-                                                 enumerate(self.DATOS_VEHICULOS)])
+        self.comboApuesta = ttk.Combobox(marcoApuesta, state="readonly", width=24,values=[f"{i + 1}. {nombre}" for i, nombre in enumerate(self.DATOS_VEHICULOS)])
         self.comboApuesta.pack()
         self.comboApuesta.bind("<<ComboboxSelected>>", lambda evento: self.resaltarApuesta())
 
         marcoRondas = tk.LabelFrame(panel, text="Rondas (ida y vuelta)", padx=8, pady=6)
         marcoRondas.pack(fill="x", pady=4)
         self.varRondas = tk.IntVar(value=2)
-        self.spinRondas = tk.Spinbox(marcoRondas, from_=1, to=20, width=6, textvariable=self.varRondas,
-                                     justify="center")
+        self.spinRondas = tk.Spinbox(marcoRondas, from_=1, to=20, width=6, textvariable=self.varRondas, justify="center")
         self.spinRondas.pack()
 
         marcoVelocidad = tk.LabelFrame(panel, text="Velocidad del juego", padx=8, pady=6)
@@ -136,9 +125,17 @@ class InterfazCarrera(tk.Tk):
     def resaltarApuesta(self):
         apuesta = self.vehiculoApostado()
         for i in range(len(self.vehiculos)):
-            colorBase = "#e5e7eb" if i % 2 == 0 else "#d4d4d8"
-            esApuesta = apuesta is not None and apuesta.numero == i + 1
-            self.canvas.itemconfig(f"carril{i + 1}", fill="#fde68a" if esApuesta else colorBase)
+            if i % 2 == 0:
+                colorBase = "#cce6ee"
+            else:
+                colorBase = "#CED6D7"
+
+            if apuesta is not None and apuesta.numero == i + 1:
+                colorCarril = "#ff0a02"
+            else:
+                colorCarril = colorBase
+
+            self.canvas.itemconfig(f"carril{i + 1}", fill=colorCarril)
 
     def vehiculoApostado(self):
         indice = self.comboApuesta.current()
@@ -150,7 +147,6 @@ class InterfazCarrera(tk.Tk):
         self.spinRondas.config(state=estado)
         self.botonIniciar.config(state=estado)
 
-    # ------------------------------------------------------------------ logica
 
     def cambiarEscala(self, valor):
         self.escala = float(valor)
@@ -160,17 +156,13 @@ class InterfazCarrera(tk.Tk):
         if self.enCarrera:
             return
         if self.vehiculoApostado() is None:
-            messagebox.showwarning("Apuesta", "Debes apostar por un vehiculo antes de iniciar.")
+            self.labelEstado.config(text="Debes apostar por un vehiculo antes de iniciar.")
             return
-        try:
-            rondas = int(self.spinRondas.get())
-        except ValueError:
-            rondas = 0
+        rondas = self.varRondas.get()
         if not 1 <= rondas <= 20:
-            messagebox.showwarning("Rondas", "El numero de rondas debe ser un entero entre 1 y 20.")
+            self.labelEstado.config(text="El numero de rondas debe ser un entero entre 1 y 20.")
             return
 
-        # Si ya hubo una carrera, se deja la pista lista antes de arrancar
         self.reiniciarCarrera()
         self.enCarrera = True
         self.bloquearControles(True)
@@ -193,7 +185,11 @@ class InterfazCarrera(tk.Tk):
             self.finalizarCarrera()
 
     def agregarFila(self, posicion, vehiculo):
-        etiquetas = ("apuesta",) if vehiculo is self.vehiculoApostado() else ()
+        if vehiculo is self.vehiculoApostado():
+            etiquetas = ("apuesta",)
+        else:
+            etiquetas = ()
+
         self.tabla.insert("", "end", values=(posicion, vehiculo.nombre, f"{vehiculo.tiempoFinal:.2f}"),
                           tags=etiquetas)
 
@@ -203,7 +199,6 @@ class InterfazCarrera(tk.Tk):
         self.temporizadorReloj.detener()
         self.actualizarReloj()
 
-        # Tabla ordenada de menor a mayor tiempo, empezando por el ganador
         ordenados = sorted(self.vehiculos, key=lambda v: v.tiempoFinal)
         self.tabla.delete(*self.tabla.get_children())
         for posicion, vehiculo in enumerate(ordenados, start=1):
@@ -219,7 +214,6 @@ class InterfazCarrera(tk.Tk):
                        f"{apuesta.nombre} llego en la posicion {posicionApuesta}.")
         self.labelEstado.config(text=mensaje)
         self.bloquearControles(False)
-        self.after(100, lambda: messagebox.showinfo("Fin de la carrera", mensaje))
 
     def reiniciarCarrera(self):
         for vehiculo in self.vehiculos:
@@ -238,6 +232,5 @@ class InterfazCarrera(tk.Tk):
         self.labelReloj.config(text=f"Tiempo: {self.cronometro.tiempoTranscurrido():.2f} s")
 
 
-if __name__ == "__main__":
-    app = InterfazCarrera()
-    app.mainloop()
+app = InterfazCarrera()
+app.mainloop()

@@ -1,12 +1,6 @@
 import time
 
-
 class Cronometro:
-    """Cronometro del juego: mide tiempo transcurrido escalado por la velocidad del juego.
-
-    Si la escala es 2.0 el tiempo del juego avanza el doble de rapido que el real,
-    asi los tiempos de la tabla no dependen de como se movio el slider.
-    """
 
     def __init__(self):
         self.tiempoInicio = None
@@ -18,7 +12,6 @@ class Cronometro:
         self.tiempoInicio = time.perf_counter()
 
     def cambiarEscala(self, nuevaEscala):
-        # Se guarda lo acumulado con la escala anterior antes de cambiarla
         if self.tiempoInicio is not None:
             ahora = time.perf_counter()
             self.tiempoAcumulado += (ahora - self.tiempoInicio) * self.escala

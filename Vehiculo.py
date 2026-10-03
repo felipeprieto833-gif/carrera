@@ -1,30 +1,14 @@
-import os
 import random
 import tkinter as tk
 
 from Temporizador import Temporizador
 
-RUTA_IMAGEN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "car.png")
-
-
 class Vehiculo:
-    REDUCCION = 8           # car.png (465x350) se reduce a 1/8 -> 59x44 px
-    ANCHO = 59              # ancho de la imagen ya reducida
-    PASO = 4                # pixeles que avanza en cada tick del timer
-    INTERVALO_MIN = 10      # ms entre ticks (mas pequeño = mas rapido)
-    INTERVALO_MAX = 40
-
-    # Imagenes compartidas por todos los vehiculos (se cargan una sola vez)
-    imagenDerecha = None
-    imagenIzquierda = None
-
-    @classmethod
-    def cargarImagenes(cls):
-        if cls.imagenDerecha is None:
-            original = tk.PhotoImage(file=RUTA_IMAGEN)
-            cls.imagenDerecha = original.subsample(cls.REDUCCION)
-            # Subsample negativo en x refleja la imagen horizontalmente
-            cls.imagenIzquierda = cls.imagenDerecha.subsample(-1, 1)
+    reduccion = 8
+    ancho = 59
+    paso = 4
+    intervaloMin = 10
+    intervaloMax = 40
 
     def __init__(self, numero, nombre, canvas, y, xMin, xMax, obtenerEscala, alTerminar):
         self.numero = numero
@@ -36,13 +20,13 @@ class Vehiculo:
         self.alTerminar = alTerminar
         self.tag = f"vehiculo{numero}"
         self.tagInfo = f"info{numero}"
-        Vehiculo.cargarImagenes()
+        self.imagen = tk.PhotoImage(file="car.png").subsample(self.reduccion)
 
-        # Cada vehiculo tiene su propio timer independiente
-        self.temporizador = Temporizador(canvas, self.INTERVALO_MAX, self.mover, obtenerEscala)
+        self.temporizador = Temporizador(canvas, self.intervaloMax, self.mover, obtenerEscala)
 
         self.canvas.create_text(10, y - 8, anchor="w", text=nombre, font=("Arial", 9, "bold"))
         self.canvas.create_text(10, y + 9, anchor="w", text="", font=("Arial", 8), tags=self.tagInfo)
+        self.canvas.create_image(xMin, y, anchor="w", image=self.imagen, tags=self.tag)
         self.reiniciar()
 
     def reiniciar(self):
@@ -62,19 +46,17 @@ class Vehiculo:
         self.temporizador.iniciar()
 
     def cambiarVelocidad(self):
-        # Velocidad aleatoria = intervalo aleatorio del timer
-        self.temporizador.cambiarIntervalo(random.randint(self.INTERVALO_MIN, self.INTERVALO_MAX))
+        self.temporizador.cambiarIntervalo(random.randint(self.intervaloMin, self.intervaloMax))
         self.actualizarInfo()
 
     def velocidad(self):
-        return self.PASO * 1000 / self.temporizador.intervaloMs
+        return self.paso * 1000 / self.temporizador.intervaloMs
 
     def mover(self):
         xAnterior = self.x
-        self.x += self.PASO * self.direccion
+        self.x += self.paso * self.direccion
 
         if self.direccion == 1 and self.x >= self.xMax:
-            # Llego al extremo derecho: da la vuelta
             self.x = self.xMax
             self.direccion = -1
             self.cambiarVelocidad()
@@ -82,7 +64,7 @@ class Vehiculo:
             return
 
         if self.direccion == -1 and self.x <= self.xMin:
-            # Llego al extremo izquierdo: completa una ronda (ida y vuelta)
+
             self.x = self.xMin
             self.rondasCompletadas += 1
             if self.rondasCompletadas >= self.rondasObjetivo:
@@ -109,7 +91,4 @@ class Vehiculo:
         self.canvas.itemconfig(self.tagInfo, text=texto)
 
     def dibujar(self):
-        """Dibuja el carro mirando hacia la direccion en que se mueve."""
-        self.canvas.delete(self.tag)
-        imagen = self.imagenDerecha if self.direccion == 1 else self.imagenIzquierda
-        self.canvas.create_image(self.x, self.y, anchor="w", image=imagen, tags=self.tag)
+        self.canvas.coords(self.tag, self.x, self.y)
